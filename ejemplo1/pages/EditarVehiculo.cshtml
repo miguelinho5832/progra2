@@ -1,4 +1,422 @@
 ﻿@page
 @model ejemplo1.pages.EditarVehiculoModel
 @{
+    ViewData["Title"] = "Editar Vehículo";
+}
+
+<div class="container-fluid formulario-taller">
+
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Editar Vehículo</h2>
+
+        <p class="text-muted mb-0">
+            Actualizar la información del vehículo
+        </p>
+    </div>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body">
+
+            <form method="post">
+
+                <input type="hidden" asp-for="Token" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger small mb-3">
+                </div>
+
+                <div class="row g-3">
+
+                    <!-- CLIENTE -->
+                    <div class="col-md-6">
+
+                        <label asp-for="Vehiculo.ClienteId"
+                               class="form-label">
+                            Cliente
+                        </label>
+
+                        <select asp-for="Vehiculo.ClienteId"
+                                class="form-select">
+
+                            <option value="0" disabled selected hidden>
+                                Seleccione un cliente
+                            </option>
+
+                            @foreach (var cliente in Model.ClientesDisponibles)
+                            {
+                                <option value="@cliente.Id">
+                                    @cliente.Nombre @cliente.Apellido - @cliente.CiNit
+                                </option>
+                            }
+
+                        </select>
+
+                        <span asp-validation-for="Vehiculo.ClienteId"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- PLACA -->
+                    <div class="col-md-6">
+
+                        <label asp-for="Vehiculo.Placa"
+                               class="form-label">
+                            Placa
+                        </label>
+
+                        <input asp-for="Vehiculo.Placa"
+                               class="form-control"
+                               maxlength="15"
+                               placeholder="Ej. 5214BEX"
+                               style="text-transform: uppercase;" />
+
+                        <span asp-validation-for="Vehiculo.Placa"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- MARCA -->
+                    <div class="col-md-6">
+
+                        <label asp-for="Vehiculo.Marca"
+                               class="form-label">
+                            Marca
+                        </label>
+
+                        <select asp-for="Vehiculo.Marca"
+                                id="marca"
+                                class="form-select">
+
+                            <option value="" disabled selected hidden>
+                                Seleccione una marca
+                            </option>
+
+                            <option value="Toyota">Toyota</option>
+                            <option value="Nissan">Nissan</option>
+                            <option value="Suzuki">Suzuki</option>
+                            <option value="Ford">Ford</option>
+                            <option value="Chevrolet">Chevrolet</option>
+                            <option value="Hyundai">Hyundai</option>
+                            <option value="Kia">Kia</option>
+                            <option value="Mazda">Mazda</option>
+                            <option value="Pico">Pico</option>
+
+                        </select>
+
+                        <span asp-validation-for="Vehiculo.Marca"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- MODELO -->
+                    <div class="col-md-6">
+
+                        <label asp-for="Vehiculo.Modelo"
+                               class="form-label">
+                            Modelo
+                        </label>
+
+                        <select asp-for="Vehiculo.Modelo"
+                                id="modelo"
+                                data-modelo-actual="@(Model.Vehiculo?.Modelo ?? "")"
+                                class="form-select">
+
+                            <option value="" disabled selected hidden>
+                                Seleccione un modelo
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="Vehiculo.Modelo"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- AÑO -->
+                    <div class="col-md-4">
+
+                        <label asp-for="Vehiculo.Anio"
+                               class="form-label">
+                            Año
+                        </label>
+
+                        <input asp-for="Vehiculo.Anio"
+                               type="number"
+                               class="form-control"
+                               placeholder="Ej. 2022" />
+
+                        <span asp-validation-for="Vehiculo.Anio"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- COLOR -->
+                    <div class="col-md-4">
+
+                        <label asp-for="Vehiculo.Color"
+                               class="form-label">
+                            Color
+                        </label>
+
+                        <select asp-for="Vehiculo.Color" class="form-select">
+                            <option value="" disabled selected hidden>Seleccione un color</option>
+                            <option value="Blanco">Blanco</option>
+                            <option value="Negro">Negro</option>
+                            <option value="Gris">Gris</option>
+                            <option value="Plata">Plata</option>
+                            <option value="Rojo">Rojo</option>
+                            <option value="Azul">Azul</option>
+                            <option value="Verde">Verde</option>
+                            <option value="Amarillo">Amarillo</option>
+                            <option value="Marrón">Marrón</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+
+                        <span asp-validation-for="Vehiculo.Color"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- TIPO -->
+                    <div class="col-md-4">
+
+                        <label asp-for="Vehiculo.Tipo"
+                               class="form-label">
+                            Tipo de vehículo
+                        </label>
+
+                        <select asp-for="Vehiculo.Tipo"
+                                class="form-select">
+
+                            <option value="" disabled selected hidden>
+                                Seleccione un tipo
+                            </option>
+
+                            <option value="Automóvil">Automóvil</option>
+                            <option value="Camioneta">Camioneta</option>
+                            <option value="Motocicleta">Motocicleta</option>
+                            <option value="Camión">Camión</option>
+                            <option value="Sedán">Sedán</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Otro">Otro</option>
+
+                        </select>
+
+                        <span asp-validation-for="Vehiculo.Tipo"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- KILOMETRAJE -->
+                    <div class="col-md-4">
+
+                        <label asp-for="Vehiculo.Kilometraje"
+                               class="form-label">
+                            Kilometraje (km)
+                        </label>
+
+                        <input asp-for="Vehiculo.Kilometraje"
+                               type="number"
+                               class="form-control"
+                               placeholder="Ej. 45000" />
+
+                        <span asp-validation-for="Vehiculo.Kilometraje"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+
+                    <!-- ESTADO -->
+                    <div class="col-md-6">
+
+                        <label asp-for="Vehiculo.Estado"
+                               class="form-label">
+                            Estado del vehículo
+                        </label>
+
+                        <select asp-for="Vehiculo.Estado"
+                                class="form-select">
+
+                            <option value="true">
+                                Activo
+                            </option>
+
+                            <option value="false">
+                                Inactivo
+                            </option>
+
+                        </select>
+
+                        <span asp-validation-for="Vehiculo.Estado"
+                              class="text-danger small">
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end gap-2">
+
+                    <a asp-page="/Vehiculos"
+                       class="btn btn-secondary">
+                        Cancelar
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        <i class="bi bi-save me-1"></i>
+                        Guardar Cambios
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        const modelosPorMarca = {
+
+            Toyota: [
+                "Corolla",
+                "Yaris",
+                "Hilux",
+                "RAV4",
+                "Fortuner"
+            ],
+
+            Nissan: [
+                "Sentra",
+                "Versa",
+                "Frontier",
+                "Kicks",
+                "X-Trail"
+            ],
+
+            Suzuki: [
+                "Swift",
+                "Vitara",
+                "Jimny",
+                "S-Presso",
+                "Baleno"
+            ],
+
+            Ford: [
+                "Ranger",
+                "EcoSport",
+                "Escape",
+                "Explorer",
+                "F-150"
+            ],
+
+            Chevrolet: [
+                "Spark",
+                "Onix",
+                "Tracker",
+                "S10",
+                "Captiva"
+            ],
+
+            Hyundai: [
+                "Accent",
+                "Elantra",
+                "Tucson",
+                "Santa Fe",
+                "Creta"
+            ],
+
+            Kia: [
+                "Rio",
+                "Cerato",
+                "Sportage",
+                "Seltos",
+                "Sorento"
+            ],
+
+            Mazda: [
+                "Mazda 2",
+                "Mazda 3",
+                "CX-3",
+                "CX-5",
+                "CX-30"
+            ],
+
+            Pico: [
+                "New Age"
+            ]
+        };
+
+        const marcaSelect = document.getElementById("marca");
+        const modeloSelect = document.getElementById("modelo");
+
+        function cargarModelos() {
+
+            if (!marcaSelect || !modeloSelect) {
+                return;
+            }
+
+            const marcaSeleccionada = marcaSelect.value;
+            const modeloActual = modeloSelect.dataset.modeloActual || "";
+
+            modeloSelect.innerHTML =
+                '<option value="" disabled selected hidden>Seleccione primeramente una marca</option>';
+
+            const modelos = modelosPorMarca[marcaSeleccionada] || [];
+
+            modelos.forEach(function (modelo) {
+
+                const option = document.createElement("option");
+                option.value = modelo;
+                option.textContent = modelo;
+
+                if (modelo === modeloActual) {
+                    option.selected = true;
+                }
+
+                modeloSelect.appendChild(option);
+            });
+        }
+
+        if (marcaSelect) {
+            marcaSelect.addEventListener("change", function () {
+                if (modeloSelect) {
+                    modeloSelect.dataset.modeloActual = "";
+                }
+                cargarModelos();
+            });
+        }
+
+        cargarModelos();
+
+    </script>
 }

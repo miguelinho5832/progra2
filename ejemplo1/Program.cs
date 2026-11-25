@@ -25,6 +25,8 @@ builder.Services.AddSingleton(configuracionBD);
 // 3. Factory Method y Repositorios
 builder.Services.AddScoped<EntidadFactory<Cliente>, ClienteFactory>();
 builder.Services.AddScoped<IRepositorio<Cliente>, RepositorioCliente>();
+builder.Services.AddScoped<EntidadFactory<Vehiculo>, VehiculoFactory>();
+builder.Services.AddScoped<IRepositorio<Vehiculo>, RepositorioVehiculo>();
 
 // 4. HttpClient asíncrono hacia la API (http://localhost:5251/)
 string apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5251/";
