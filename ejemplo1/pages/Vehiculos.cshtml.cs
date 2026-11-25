@@ -53,6 +53,50 @@ namespace ejemplo1.pages
             return _protector.Protect(id.ToString());
         }
 
+        public async Task<IActionResult> OnPostToggleEstadoAsync(string token, bool nuevoEstado)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    TempData["Error"] = "No se pudo identificar el vehículo seleccionado.";
+                    return RedirectToPage();
+                }
+
+                string textoId = _protector.Unprotect(token);
+
+                if (!int.TryParse(textoId, out int id) || !Validaciones.EsIdValido(id))
+                {
+                    TempData["Error"] = "No se pudo identificar el vehículo seleccionado.";
+                    return RedirectToPage();
+                }
+
+                var payload = new { estado = nuevoEstado };
+                var respuesta = await _httpClient.PatchAsJsonAsync($"api/vehiculos/{id}", payload);
+
+                if (respuesta.IsSuccessStatusCode)
+                {
+                    TempData["Mensaje"] = nuevoEstado
+                        ? "El vehículo fue activado correctamente."
+                        : "El vehículo fue desactivado correctamente.";
+                }
+                else if (respuesta.StatusCode == HttpStatusCode.NotFound)
+                {
+                    TempData["Error"] = "El vehículo ya no está disponible.";
+                }
+                else
+                {
+                    TempData["Error"] = "No se pudo actualizar el estado del vehículo.";
+                }
+            }
+            catch
+            {
+                TempData["Error"] = "No se pudo actualizar el estado del vehículo.";
+            }
+
+            return RedirectToPage();
+        }
+
         public async Task<IActionResult> OnPostEliminarAsync(string token)
         {
             try

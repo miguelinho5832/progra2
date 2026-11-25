@@ -106,7 +106,7 @@ namespace ejemplo1.Repositories
             const string sql = @"INSERT INTO vehiculo
                                     (cliente_id, placa, marca, modelo, anio, color, tipo, kilometraje, estado, eliminado)
                                  VALUES
-                                    (@cliente_id, @placa, @marca, @modelo, @anio, @color, @tipo, @kilometraje, 1, 0);
+                                    (@cliente_id, @placa, @marca, @modelo, @anio, @color, @tipo, @kilometraje, @estado, 0);
                                  SELECT LAST_INSERT_ID();";
 
             using var conexion = new MySqlConnection(_configuracion.ConnectionString);
@@ -114,13 +114,14 @@ namespace ejemplo1.Repositories
 
             using var comando = new MySqlCommand(sql, conexion);
             comando.Parameters.AddWithValue("@cliente_id", entidad.ClienteId);
-            comando.Parameters.AddWithValue("@placa", entidad.Placa.Trim().ToUpperInvariant());
-            comando.Parameters.AddWithValue("@marca", entidad.Marca.Trim());
-            comando.Parameters.AddWithValue("@modelo", entidad.Modelo.Trim());
+            comando.Parameters.AddWithValue("@placa", Validaciones.SanitizarTexto(entidad.Placa, 15).ToUpperInvariant());
+            comando.Parameters.AddWithValue("@marca", Validaciones.Capitalizar(Validaciones.SanitizarTexto(entidad.Marca, 60)));
+            comando.Parameters.AddWithValue("@modelo", Validaciones.Capitalizar(Validaciones.SanitizarTexto(entidad.Modelo, 60)));
             comando.Parameters.AddWithValue("@anio", entidad.Anio ?? 0);
-            comando.Parameters.AddWithValue("@color", entidad.Color.Trim());
-            comando.Parameters.AddWithValue("@tipo", entidad.Tipo.Trim());
+            comando.Parameters.AddWithValue("@color", Validaciones.Capitalizar(Validaciones.SanitizarTexto(entidad.Color, 40)));
+            comando.Parameters.AddWithValue("@tipo", Validaciones.SanitizarTexto(entidad.Tipo, 40));
             comando.Parameters.AddWithValue("@kilometraje", entidad.Kilometraje ?? 0);
+            comando.Parameters.AddWithValue("@estado", entidad.Estado ? 1 : 0);
 
             var resultado = await comando.ExecuteScalarAsync();
             return Convert.ToInt32(resultado);
@@ -145,12 +146,12 @@ namespace ejemplo1.Repositories
             using var comando = new MySqlCommand(sql, conexion);
             comando.Parameters.AddWithValue("@id", entidad.Id);
             comando.Parameters.AddWithValue("@cliente_id", entidad.ClienteId);
-            comando.Parameters.AddWithValue("@placa", entidad.Placa.Trim().ToUpperInvariant());
-            comando.Parameters.AddWithValue("@marca", entidad.Marca.Trim());
-            comando.Parameters.AddWithValue("@modelo", entidad.Modelo.Trim());
+            comando.Parameters.AddWithValue("@placa", Validaciones.SanitizarTexto(entidad.Placa, 15).ToUpperInvariant());
+            comando.Parameters.AddWithValue("@marca", Validaciones.Capitalizar(Validaciones.SanitizarTexto(entidad.Marca, 60)));
+            comando.Parameters.AddWithValue("@modelo", Validaciones.Capitalizar(Validaciones.SanitizarTexto(entidad.Modelo, 60)));
             comando.Parameters.AddWithValue("@anio", entidad.Anio ?? 0);
-            comando.Parameters.AddWithValue("@color", entidad.Color.Trim());
-            comando.Parameters.AddWithValue("@tipo", entidad.Tipo.Trim());
+            comando.Parameters.AddWithValue("@color", Validaciones.Capitalizar(Validaciones.SanitizarTexto(entidad.Color, 40)));
+            comando.Parameters.AddWithValue("@tipo", Validaciones.SanitizarTexto(entidad.Tipo, 40));
             comando.Parameters.AddWithValue("@kilometraje", entidad.Kilometraje ?? 0);
 
             return await comando.ExecuteNonQueryAsync();
@@ -158,56 +159,125 @@ namespace ejemplo1.Repositories
 
         public async Task<int> ActualizarParcialAsync(int id, Dictionary<string, object?> campos)
         {
-            var actual = await ObtenerIdAsync(id);
-            if (actual is null || campos is null || campos.Count == 0)
+            if (id <= 0 || campos is null || campos.Count == 0)
             {
                 return 0;
             }
 
+            var columnasPermitidas = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "placa",
+                "marca",
+                "modelo",
+                "anio",
+                "color",
+                "tipo",
+                "kilometraje",
+                "cliente_id",
+                "estado"
+            };
+
+            var sets = new List<string>();
+            using var conexion = new MySqlConnection(_configuracion.ConnectionString);
+            await conexion.OpenAsync();
+
+            using var comando = new MySqlCommand();
+            comando.Connection = conexion;
+
+            int idx = 0;
             foreach (var par in campos)
             {
-                var clave = par.Key.ToLowerInvariant();
-                var valor = par.Value?.ToString();
-
-                switch (clave)
+                string clave = par.Key.Trim().ToLowerInvariant();
+                if (clave == "clienteid")
                 {
-                    case "placa":
-                        if (!string.IsNullOrWhiteSpace(valor))
-                            actual.Placa = valor.Trim().ToUpperInvariant();
-                        break;
-                    case "marca":
-                        if (!string.IsNullOrWhiteSpace(valor))
-                            actual.Marca = valor.Trim();
-                        break;
-                    case "modelo":
-                        if (!string.IsNullOrWhiteSpace(valor))
-                            actual.Modelo = valor.Trim();
-                        break;
-                    case "anio":
-                        if (int.TryParse(valor, out int anio))
-                            actual.Anio = anio;
-                        break;
-                    case "color":
-                        if (!string.IsNullOrWhiteSpace(valor))
-                            actual.Color = valor.Trim();
-                        break;
-                    case "tipo":
-                        if (!string.IsNullOrWhiteSpace(valor))
-                            actual.Tipo = valor.Trim();
-                        break;
-                    case "kilometraje":
-                        if (int.TryParse(valor, out int km))
-                            actual.Kilometraje = km;
-                        break;
-                    case "cliente_id":
-                    case "clienteid":
-                        if (int.TryParse(valor, out int clienteId))
-                            actual.ClienteId = clienteId;
-                        break;
+                    clave = "cliente_id";
+                }
+
+                if (!columnasPermitidas.Contains(clave))
+                {
+                    continue;
+                }
+
+                string paramName = $"@p{idx++}";
+                sets.Add($"{clave} = {paramName}");
+
+                if (par.Value is null)
+                {
+                    comando.Parameters.AddWithValue(paramName, DBNull.Value);
+                }
+                else
+                {
+                    switch (clave)
+                    {
+                        case "placa":
+                            string placa = Validaciones.SanitizarTexto(par.Value.ToString(), 15).ToUpperInvariant();
+                            comando.Parameters.AddWithValue(paramName, placa);
+                            break;
+
+                        case "marca":
+                        case "modelo":
+                            string textoCapital = Validaciones.Capitalizar(
+                                Validaciones.SanitizarTexto(par.Value.ToString(), 60));
+                            comando.Parameters.AddWithValue(paramName, textoCapital);
+                            break;
+
+                        case "color":
+                            string color = Validaciones.Capitalizar(
+                                Validaciones.SanitizarTexto(par.Value.ToString(), 40));
+                            comando.Parameters.AddWithValue(paramName, color);
+                            break;
+
+                        case "tipo":
+                            string tipo = Validaciones.SanitizarTexto(par.Value.ToString(), 40);
+                            comando.Parameters.AddWithValue(paramName, tipo);
+                            break;
+
+                        case "anio":
+                        case "kilometraje":
+                        case "cliente_id":
+                            if (int.TryParse(par.Value.ToString(), out int entero))
+                            {
+                                comando.Parameters.AddWithValue(paramName, entero);
+                            }
+                            else
+                            {
+                                return 0;
+                            }
+                            break;
+
+                        case "estado":
+                            if (par.Value is bool b)
+                            {
+                                comando.Parameters.AddWithValue(paramName, b ? 1 : 0);
+                            }
+                            else if (bool.TryParse(par.Value.ToString(), out bool parsedBool))
+                            {
+                                comando.Parameters.AddWithValue(paramName, parsedBool ? 1 : 0);
+                            }
+                            else if (int.TryParse(par.Value.ToString(), out int numEstado))
+                            {
+                                comando.Parameters.AddWithValue(paramName, numEstado != 0 ? 1 : 0);
+                            }
+                            else
+                            {
+                                return 0;
+                            }
+                            break;
+                    }
                 }
             }
 
-            return await EditarAsync(actual);
+            if (sets.Count == 0)
+            {
+                return 0;
+            }
+
+            comando.CommandText = $@"UPDATE vehiculo
+                                     SET {string.Join(", ", sets)}
+                                     WHERE id = @id AND eliminado = 0";
+            comando.Parameters.AddWithValue("@id", id);
+
+            return await comando.ExecuteNonQueryAsync();
         }
 
         public async Task<int> EliminarAsync(int id)

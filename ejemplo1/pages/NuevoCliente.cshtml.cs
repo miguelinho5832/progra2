@@ -1,26 +1,27 @@
-using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Http.Json;
-using ejemplo1.Factories;
+using ejemplo1.config;
 using ejemplo1.models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using TallerMecanicoSOLID.Factories;
 
 namespace ejemplo1.pages
 {
     public class NuevoClienteModel : PageModel
     {
         private readonly HttpClient _httpClient;
-        private readonly ClienteFactory _clienteFactory;
+        private readonly EntidadFactory<Cliente> _clienteFactory;
 
-        public NuevoClienteModel(IHttpClientFactory httpClientFactory)
+        public NuevoClienteModel(
+            IHttpClientFactory httpClientFactory,
+            EntidadFactory<Cliente> clienteFactory)
         {
             _httpClient = httpClientFactory.CreateClient("ApiTaller");
-            _clienteFactory = new ClienteFactory();
+            _clienteFactory = clienteFactory;
         }
 
         [BindProperty]
-        [Required(ErrorMessage = "El número de CI / NIT es obligatorio.")]
         public string? NumeroCi { get; set; }
 
         [BindProperty]
@@ -39,65 +40,117 @@ namespace ejemplo1.pages
         {
             Cliente ??= _clienteFactory.Crear();
 
-            Cliente.Nombre = CapitalizarTexto(LimpiarTexto(Cliente.Nombre, 50));
-            Cliente.Apellido = CapitalizarTexto(LimpiarTexto(Cliente.Apellido, 50));
-            NumeroCi = (NumeroCi ?? "").Trim();
-            ExtensionCi = (ExtensionCi ?? "").Trim().ToUpperInvariant();
+            Cliente.Nombre = Validaciones.Capitalizar(
+                Validaciones.SanitizarTexto(Cliente.Nombre ?? "", 50));
+            Cliente.Apellido = Validaciones.Capitalizar(
+                Validaciones.SanitizarTexto(Cliente.Apellido ?? "", 50));
 
-            string[] extensionesValidas = { "CB", "LP", "SC", "OR", "PT", "TJ", "CH", "BE", "PA" };
+            NumeroCi = Validaciones.SanitizarTexto(NumeroCi ?? "", 10);
+            ExtensionCi = Validaciones.SanitizarTexto(ExtensionCi ?? "", 5).ToUpperInvariant();
 
-            // models/Cliente.cs exige solo dígitos y máximo 10 caracteres en CiNit
+            // Cliente.cs exige solo dígitos y máximo 10 caracteres en CiNit
             Cliente.CiNit = NumeroCi;
 
-            Cliente.Telefono = LimpiarTexto(Cliente.Telefono, 8);
-            Cliente.Email = LimpiarTexto(Cliente.Email, 50).ToLowerInvariant();
-            Cliente.Direccion = LimpiarTexto(Cliente.Direccion, 255);
+            Cliente.Telefono = Validaciones.SanitizarTexto(Cliente.Telefono ?? "", 8);
+            Cliente.Email = Validaciones.SanitizarTexto(Cliente.Email ?? "", 50).ToLowerInvariant();
+            Cliente.Direccion = Validaciones.SanitizarTexto(Cliente.Direccion ?? "", 255);
             Cliente.FechaRegistro = DateTime.Now;
 
             ModelState.Clear();
             TryValidateModel(Cliente, nameof(Cliente));
 
-            if (string.IsNullOrWhiteSpace(NumeroCi))
-                ModelState.AddModelError("NumeroCi", "El número de CI / NIT es obligatorio.");
-            else if (!NumeroCi.All(char.IsDigit))
-                ModelState.AddModelError("NumeroCi", "El número de CI / NIT solo puede contener dígitos.");
-            else if (NumeroCi.Length > 10)
-                ModelState.AddModelError("NumeroCi", "El CI / NIT no puede superar 10 caracteres.");
+            string[] extensionesValidas = { "CB", "LP", "SC", "OR", "PT", "TJ", "CH", "BE", "PA" };
 
-            if (!string.IsNullOrEmpty(ExtensionCi) && !extensionesValidas.Contains(ExtensionCi))
-                ModelState.AddModelError("ExtensionCi", "Seleccione una extensión de CI válida.");
-
+            // 1. Nombre
             if (string.IsNullOrWhiteSpace(Cliente.Nombre))
+            {
                 ModelState.AddModelError("Cliente.Nombre", "El nombre es obligatorio.");
-            else if (Cliente.Nombre.Length < 2)
-                ModelState.AddModelError("Cliente.Nombre", "El nombre debe tener al menos 2 caracteres.");
-            else if (!SoloLetrasYEspacios(Cliente.Nombre))
+            }
+            else if (Cliente.Nombre.Length < 2 || Cliente.Nombre.Length > 50)
+            {
+                ModelState.AddModelError("Cliente.Nombre", "El nombre debe tener entre 2 y 50 caracteres.");
+            }
+            else if (!Validaciones.SoloLetras(Cliente.Nombre))
+            {
                 ModelState.AddModelError("Cliente.Nombre", "El nombre solo puede contener letras y espacios.");
+            }
 
+            // 2. Apellido
             if (string.IsNullOrWhiteSpace(Cliente.Apellido))
+            {
                 ModelState.AddModelError("Cliente.Apellido", "El apellido es obligatorio.");
-            else if (Cliente.Apellido.Length < 2)
-                ModelState.AddModelError("Cliente.Apellido", "El apellido debe tener al menos 2 caracteres.");
-            else if (!SoloLetrasYEspacios(Cliente.Apellido))
+            }
+            else if (Cliente.Apellido.Length < 2 || Cliente.Apellido.Length > 50)
+            {
+                ModelState.AddModelError("Cliente.Apellido", "El apellido debe tener entre 2 y 50 caracteres.");
+            }
+            else if (!Validaciones.SoloLetras(Cliente.Apellido))
+            {
                 ModelState.AddModelError("Cliente.Apellido", "El apellido solo puede contener letras y espacios.");
+            }
 
+            // 3. Número de CI / NIT
+            if (string.IsNullOrWhiteSpace(NumeroCi))
+            {
+                ModelState.AddModelError("NumeroCi", "El número de CI / NIT es obligatorio.");
+            }
+            else if (NumeroCi.Length > 10)
+            {
+                ModelState.AddModelError("NumeroCi", "El CI / NIT no puede superar 10 caracteres.");
+            }
+            else if (!Validaciones.ValidarCiNit(NumeroCi))
+            {
+                ModelState.AddModelError("NumeroCi", "El número de CI / NIT solo puede contener dígitos.");
+            }
+
+            // 4. Extensión CI (opcional)
+            if (!string.IsNullOrEmpty(ExtensionCi) && !extensionesValidas.Contains(ExtensionCi))
+            {
+                ModelState.AddModelError("ExtensionCi", "Seleccione una extensión de CI válida.");
+            }
+
+            // 5. Teléfono
             if (string.IsNullOrWhiteSpace(Cliente.Telefono))
+            {
                 ModelState.AddModelError("Cliente.Telefono", "El teléfono es obligatorio.");
-            else if (Cliente.Telefono.Length < 6)
-                ModelState.AddModelError("Cliente.Telefono", "El teléfono debe tener al menos 6 caracteres.");
-            else if (!Cliente.Telefono.All(char.IsDigit))
+            }
+            else if (Cliente.Telefono.Length < 6 || Cliente.Telefono.Length > 8)
+            {
+                ModelState.AddModelError("Cliente.Telefono", "El teléfono debe tener entre 6 y 8 dígitos.");
+            }
+            else if (!Validaciones.ValidarTelefono(Cliente.Telefono))
+            {
                 ModelState.AddModelError("Cliente.Telefono", "El teléfono solo debe contener dígitos.");
+            }
 
+            // 6. Correo electrónico
             if (string.IsNullOrWhiteSpace(Cliente.Email))
+            {
                 ModelState.AddModelError("Cliente.Email", "El correo electrónico es obligatorio.");
-            else if (!new EmailAddressAttribute().IsValid(Cliente.Email))
+            }
+            else if (Cliente.Email.Length > 50)
+            {
+                ModelState.AddModelError("Cliente.Email", "El correo no puede superar 50 caracteres.");
+            }
+            else if (!Validaciones.ValidarEmail(Cliente.Email))
+            {
                 ModelState.AddModelError("Cliente.Email", "Ingrese un correo electrónico válido.");
+            }
 
+            // 7. Dirección
             if (string.IsNullOrWhiteSpace(Cliente.Direccion))
+            {
                 ModelState.AddModelError("Cliente.Direccion", "La dirección es obligatoria.");
+            }
+            else if (Cliente.Direccion.Length < 3 || Cliente.Direccion.Length > 255)
+            {
+                ModelState.AddModelError("Cliente.Direccion", "La dirección debe tener entre 3 y 255 caracteres.");
+            }
 
             if (!ModelState.IsValid)
+            {
                 return Page();
+            }
 
             try
             {
@@ -115,37 +168,29 @@ namespace ejemplo1.pages
                     return Page();
                 }
 
-                var detalleError = await respuesta.Content.ReadAsStringAsync();
-                ModelState.AddModelError("", $"No se pudo registrar el cliente (HTTP {(int)respuesta.StatusCode}). {detalleError}");
+                if (respuesta.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    string detalleError = await respuesta.Content.ReadAsStringAsync();
+                    if (detalleError.Contains("1062") ||
+                        detalleError.Contains("Duplicate", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ModelState.AddModelError("NumeroCi", "Ya existe un cliente registrado con ese CI / NIT.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "Revise los datos ingresados del cliente. No se pudo completar el registro.");
+                    }
+                    return Page();
+                }
+
+                ModelState.AddModelError("", "No se pudo registrar el cliente. Inténtelo nuevamente.");
                 return Page();
             }
-            catch (Exception ex)
+            catch
             {
-                ModelState.AddModelError("", $"Error de comunicación con la API: {ex.Message}");
+                ModelState.AddModelError("", "Ocurrió un problema de comunicación al registrar el cliente. Inténtelo nuevamente.");
                 return Page();
             }
         }
-
-        private static string LimpiarTexto(string? valor, int maxLongitud)
-        {
-            if (string.IsNullOrWhiteSpace(valor)) return "";
-            var limpio = valor.Trim();
-            return limpio.Length > maxLongitud ? limpio[..maxLongitud] : limpio;
-        }
-
-        private static string CapitalizarTexto(string texto)
-        {
-            if (string.IsNullOrWhiteSpace(texto)) return "";
-            var partes = texto.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < partes.Length; i++)
-            {
-                var p = partes[i].ToLowerInvariant();
-                partes[i] = char.ToUpperInvariant(p[0]) + p[1..];
-            }
-            return string.Join(" ", partes);
-        }
-
-        private static bool SoloLetrasYEspacios(string texto) =>
-            texto.All(c => char.IsLetter(c) || char.IsWhiteSpace(c));
     }
 }

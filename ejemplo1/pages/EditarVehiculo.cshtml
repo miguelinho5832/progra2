@@ -386,7 +386,7 @@
             }
 
             const marcaSeleccionada = marcaSelect.value;
-            const modeloActual = modeloSelect.dataset.modeloActual || "";
+            const modeloActual = modeloSelect.dataset.modeloActual || "@(Model.Vehiculo?.Modelo ?? "")";
 
             modeloSelect.innerHTML =
                 '<option value="" disabled selected hidden>Seleccione primeramente una marca</option>';

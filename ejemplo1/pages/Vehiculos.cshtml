@@ -152,7 +152,7 @@
                                 <th>Estado</th>
 
                                 <th class="text-center"
-                                    style="min-width: 190px;">
+                                    style="min-width: 260px;">
 
                                     Acciones
 
@@ -169,6 +169,7 @@
                             {
                                 var vehiculo = Model.ListaVehiculos[i];
                                 var token = Model.GenerarToken(vehiculo.Id);
+                                var siguienteEstado = (!vehiculo.Estado).ToString().ToLowerInvariant();
 
                                 <tr>
 
@@ -267,6 +268,29 @@
                                                 Editar
 
                                             </a>
+
+
+                                            <form method="post"
+                                                  asp-page-handler="ToggleEstado"
+                                                  class="d-inline">
+
+                                                <input type="hidden"
+                                                       name="token"
+                                                       value="@token" />
+
+                                                <input type="hidden"
+                                                       name="nuevoEstado"
+                                                       value="@siguienteEstado" />
+
+                                                <button type="submit"
+                                                        class="btn btn-sm @(vehiculo.Estado ? "btn-outline-warning" : "btn-outline-success") text-nowrap">
+
+                                                    <i class="bi @(vehiculo.Estado ? "bi-slash-circle" : "bi-check-circle")"></i>
+                                                    @(vehiculo.Estado ? "Desactivar" : "Activar")
+
+                                                </button>
+
+                                            </form>
 
 
                                             <button type="button"

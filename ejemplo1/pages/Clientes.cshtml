@@ -84,7 +84,7 @@
                                 <th>Email</th>
                                 <th>Dirección</th>
                                 <th>Fecha registro</th>
-                                <th class="text-center" style="min-width: 190px;">Acciones</th>
+                                <th class="text-center" style="min-width: 270px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -103,16 +103,25 @@
                                     <td>@cliente.Direccion</td>
                                     <td>@cliente.FechaRegistro.ToString("dd/MM/yyyy")</td>
                                     <td class="text-center">
-                                        <div class="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
+                                        <div class="d-flex justify-content-center align-items-center gap-2 flex-wrap flex-xl-nowrap">
                                             <a asp-page="/EditarCliente"
                                                asp-route-id="@token"
-                                               class="btn btn-sm btn-outline-primary">
+                                               class="btn btn-sm btn-outline-primary text-nowrap">
                                                 <i class="bi bi-pencil"></i>
                                                 Editar
                                             </a>
 
                                             <button type="button"
-                                                    class="btn btn-sm btn-outline-danger"
+                                                    class="btn btn-sm btn-outline-info text-nowrap"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#modalPatchCliente-@cliente.Id"
+                                                    title="Edición rápida (PATCH)">
+                                                <i class="bi bi-sliders"></i>
+                                                Contacto
+                                            </button>
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger text-nowrap"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#modalEliminarCliente-@cliente.Id">
                                                 <i class="bi bi-trash"></i>
@@ -135,6 +144,61 @@
 @foreach (var cliente in Model.ListaClientes)
 {
     var token = Model.GenerarToken(cliente.Id);
+
+    <div class="modal fade"
+         id="modalPatchCliente-@cliente.Id"
+         tabindex="-1"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="post" asp-page-handler="ActualizarRapido">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Actualización rápida - @cliente.Nombre @cliente.Apellido</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="token" value="@token" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text"
+                                   name="telefono"
+                                   value="@cliente.Telefono"
+                                   class="form-control"
+                                   maxlength="8"
+                                   required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email"
+                                   name="email"
+                                   value="@cliente.Email"
+                                   class="form-control"
+                                   maxlength="50" />
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label">Dirección</label>
+                            <input type="text"
+                                   name="direccion"
+                                   value="@cliente.Direccion"
+                                   class="form-control"
+                                   maxlength="255" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-info text-white">
+                            Guardar cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade"
          id="modalEliminarCliente-@cliente.Id"

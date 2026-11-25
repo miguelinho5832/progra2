@@ -40,7 +40,8 @@ namespace ejemplo1.pages
             {
                 var clientes = await _httpClient.GetFromJsonAsync<List<Cliente>>("api/clientes");
                 ClientesDisponibles = (clientes ?? new List<Cliente>())
-                    .Where(cliente => cliente.Estado)
+                    .OrderBy(c => c.Nombre, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(c => c.Apellido, StringComparer.CurrentCultureIgnoreCase)
                     .ToList();
             }
             catch
@@ -62,6 +63,7 @@ namespace ejemplo1.pages
             ModelState.Clear();
             TryValidateModel(Vehiculo, nameof(Vehiculo));
 
+            // 1. Placa
             if (!string.IsNullOrWhiteSpace(Vehiculo.Placa) &&
                 !Validaciones.ValidarPlaca(Vehiculo.Placa))
             {
@@ -70,14 +72,32 @@ namespace ejemplo1.pages
                     "La placa debe contener 3 o 4 números seguidos de 3 letras. Ejemplo: 5214BEX.");
             }
 
-            if (!string.IsNullOrWhiteSpace(Vehiculo.Marca) &&
-                !Validaciones.ValidarMarca(Vehiculo.Marca))
+            // 2. Marca
+            string[] marcasPermitidas =
             {
-                ModelState.AddModelError(
-                    "Vehiculo.Marca",
-                    "La marca solo puede contener letras, espacios y guiones.");
+                "Toyota",
+                "Nissan",
+                "Suzuki",
+                "Ford",
+                "Chevrolet",
+                "Hyundai",
+                "Kia",
+                "Mazda",
+                "Pico"
+            };
+
+            if (!string.IsNullOrWhiteSpace(Vehiculo.Marca))
+            {
+                if (!Validaciones.ValidarMarca(Vehiculo.Marca) ||
+                    !marcasPermitidas.Contains(Vehiculo.Marca))
+                {
+                    ModelState.AddModelError(
+                        "Vehiculo.Marca",
+                        "Seleccione una marca de vehículo válida.");
+                }
             }
 
+            // 3. Modelo
             if (!string.IsNullOrWhiteSpace(Vehiculo.Modelo) &&
                 !Validaciones.ValidarModelo(Vehiculo.Modelo))
             {
@@ -86,14 +106,42 @@ namespace ejemplo1.pages
                     "El modelo solo puede contener letras, números, espacios y guiones.");
             }
 
-            if (!string.IsNullOrWhiteSpace(Vehiculo.Color) &&
-                !Validaciones.LetrasNumerosEspacios(Vehiculo.Color))
+            // 4. Año
+            if (Vehiculo.Anio.HasValue &&
+                (Vehiculo.Anio.Value < 1901 || !Validaciones.ValidarAnio(Vehiculo.Anio.Value)))
             {
                 ModelState.AddModelError(
-                    "Vehiculo.Color",
-                    "Ingrese un color válido.");
+                    "Vehiculo.Anio",
+                    "Ingrese un año válido.");
             }
 
+            // 5. Color
+            string[] coloresPermitidos =
+            {
+                "Blanco",
+                "Negro",
+                "Gris",
+                "Plata",
+                "Rojo",
+                "Azul",
+                "Verde",
+                "Amarillo",
+                "Marrón",
+                "Otro"
+            };
+
+            if (!string.IsNullOrWhiteSpace(Vehiculo.Color))
+            {
+                if (!Validaciones.LetrasNumerosEspacios(Vehiculo.Color) ||
+                    !coloresPermitidos.Contains(Vehiculo.Color))
+                {
+                    ModelState.AddModelError(
+                        "Vehiculo.Color",
+                        "Seleccione un color válido.");
+                }
+            }
+
+            // 6. Tipo
             string[] tiposPermitidos =
             {
                 "Automóvil",
@@ -113,9 +161,25 @@ namespace ejemplo1.pages
                     "Seleccione un tipo de vehículo válido.");
             }
 
+            // 7. Kilometraje
+            if (Vehiculo.Kilometraje.HasValue &&
+                !Validaciones.ValidarKilometraje(Vehiculo.Kilometraje.Value))
+            {
+                ModelState.AddModelError(
+                    "Vehiculo.Kilometraje",
+                    "El kilometraje debe estar entre 0 y 2.000.000.");
+            }
+
+            // 8. Cliente
             await CargarClientesAsync();
 
-            if (Vehiculo.ClienteId > 0)
+            if (!Validaciones.EsIdValido(Vehiculo.ClienteId))
+            {
+                ModelState.AddModelError(
+                    "Vehiculo.ClienteId",
+                    "Debe seleccionar un cliente.");
+            }
+            else
             {
                 bool clienteValido = ClientesDisponibles.Any(c => c.Id == Vehiculo.ClienteId);
                 if (!clienteValido)
@@ -151,7 +215,9 @@ namespace ejemplo1.pages
 
                 string detalleError = await respuesta.Content.ReadAsStringAsync();
                 if (!string.IsNullOrWhiteSpace(detalleError) &&
-                    detalleError.Contains("placa", StringComparison.OrdinalIgnoreCase))
+                    (detalleError.Contains("placa", StringComparison.OrdinalIgnoreCase) ||
+                     detalleError.Contains("1062") ||
+                     detalleError.Contains("Duplicate", StringComparison.OrdinalIgnoreCase)))
                 {
                     ModelState.AddModelError(
                         "Vehiculo.Placa",

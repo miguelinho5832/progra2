@@ -140,46 +140,102 @@ namespace ejemplo1.Repositories
 
         public async Task<int> ActualizarParcialAsync(int id, Dictionary<string, object?> campos)
         {
-            var actual = await ObtenerIdAsync(id);
-            if (actual is null || campos is null || campos.Count == 0)
+            if (id <= 0 || campos is null || campos.Count == 0)
             {
                 return 0;
             }
 
+            var columnasPermitidas = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "nombre",
+                "apellido",
+                "ci_nit",
+                "telefono",
+                "email",
+                "direccion"
+            };
+
+            var sets = new List<string>();
+            using var conexion = new MySqlConnection(_configuracion.ConnectionString);
+            await conexion.OpenAsync();
+
+            using var comando = new MySqlCommand();
+            comando.Connection = conexion;
+
+            int idx = 0;
             foreach (var par in campos)
             {
-                var clave = par.Key.ToLowerInvariant();
-                var valor = par.Value?.ToString();
-
-                switch (clave)
+                string clave = par.Key.Trim().ToLowerInvariant();
+                if (clave == "cinit")
                 {
-                    case "nombre":
-                        if (!string.IsNullOrWhiteSpace(valor))
-                            actual.Nombre = valor.Trim();
-                        break;
-                    case "apellido":
-                        if (!string.IsNullOrWhiteSpace(valor))
-                            actual.Apellido = valor.Trim();
-                        break;
-                    case "ci_nit":
-                    case "cinit":
-                        if (!string.IsNullOrWhiteSpace(valor))
-                            actual.CiNit = valor.Trim();
-                        break;
-                    case "telefono":
-                        if (!string.IsNullOrWhiteSpace(valor))
-                            actual.Telefono = valor.Trim();
-                        break;
-                    case "email":
-                        actual.Email = string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
-                        break;
-                    case "direccion":
-                        actual.Direccion = string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
-                        break;
+                    clave = "ci_nit";
+                }
+
+                if (!columnasPermitidas.Contains(clave))
+                {
+                    continue;
+                }
+
+                string paramName = $"@p{idx++}";
+                sets.Add($"{clave} = {paramName}");
+
+                if (par.Value is null)
+                {
+                    comando.Parameters.AddWithValue(paramName, DBNull.Value);
+                }
+                else if (par.Value is string s)
+                {
+                    string limpio = s.Trim();
+
+                    if (clave == "nombre" || clave == "apellido")
+                    {
+                        limpio = Validaciones.Capitalizar(Validaciones.SanitizarTexto(limpio, 50));
+                        comando.Parameters.AddWithValue(paramName, limpio);
+                    }
+                    else if (clave == "ci_nit")
+                    {
+                        comando.Parameters.AddWithValue(paramName, Validaciones.SanitizarTexto(limpio, 10));
+                    }
+                    else if (clave == "telefono")
+                    {
+                        comando.Parameters.AddWithValue(paramName, Validaciones.SanitizarTexto(limpio, 8));
+                    }
+                    else if (clave == "email")
+                    {
+                        string emailLimpio = Validaciones.SanitizarTexto(limpio, 50);
+                        comando.Parameters.AddWithValue(
+                            paramName,
+                            string.IsNullOrWhiteSpace(emailLimpio) ? DBNull.Value : emailLimpio);
+                    }
+                    else if (clave == "direccion")
+                    {
+                        string dirLimpia = Validaciones.SanitizarTexto(limpio, 255);
+                        comando.Parameters.AddWithValue(
+                            paramName,
+                            string.IsNullOrWhiteSpace(dirLimpia) ? DBNull.Value : dirLimpia);
+                    }
+                    else
+                    {
+                        comando.Parameters.AddWithValue(paramName, limpio);
+                    }
+                }
+                else
+                {
+                    comando.Parameters.AddWithValue(paramName, par.Value);
                 }
             }
 
-            return await EditarAsync(actual);
+            if (sets.Count == 0)
+            {
+                return 0;
+            }
+
+            comando.CommandText = $@"UPDATE cliente
+                                     SET {string.Join(", ", sets)}
+                                     WHERE id = @id AND eliminado = 0";
+            comando.Parameters.AddWithValue("@id", id);
+
+            return await comando.ExecuteNonQueryAsync();
         }
 
         public async Task<int> EliminarAsync(int id)
@@ -212,8 +268,8 @@ namespace ejemplo1.Repositories
             cliente.Apellido = lector["apellido"] == DBNull.Value ? "" : lector["apellido"].ToString()!;
             cliente.CiNit = lector["ci_nit"] == DBNull.Value ? "" : lector["ci_nit"].ToString()!;
             cliente.Telefono = lector["telefono"].ToString()!;
-            cliente.Email = lector["email"] == DBNull.Value ? null : lector["email"].ToString();
-            cliente.Direccion = lector["direccion"] == DBNull.Value ? null : lector["direccion"].ToString();
+            cliente.Email = lector["email"] == DBNull.Value ? "" : lector["email"].ToString()!;
+            cliente.Direccion = lector["direccion"] == DBNull.Value ? "" : lector["direccion"].ToString()!;
             cliente.FechaRegistro = Convert.ToDateTime(lector["fecha_registro"]);
             return cliente;
         }

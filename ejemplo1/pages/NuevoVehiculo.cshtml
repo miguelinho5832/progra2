@@ -27,7 +27,7 @@
                 @if (Model.ClientesDisponibles.Count == 0)
                 {
                     <div class="alert alert-warning">
-                        No existen clientes activos. Registra un cliente
+                        No existen clientes registrados. Registra un cliente
                         antes de crear un vehículo.
                     </div>
                 }
@@ -401,7 +401,7 @@
             }
 
             const marcaSeleccionada = marcaSelect.value;
-            const modeloActual = modeloSelect.dataset.modeloActual || "";
+            const modeloActual = modeloSelect.dataset.modeloActual || "@(Model.Vehiculo?.Modelo ?? "")";
 
             modeloSelect.innerHTML =
                 '<option value="">Seleccione un modelo</option>';

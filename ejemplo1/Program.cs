@@ -27,6 +27,8 @@ builder.Services.AddScoped<EntidadFactory<Cliente>, ClienteFactory>();
 builder.Services.AddScoped<IRepositorio<Cliente>, RepositorioCliente>();
 builder.Services.AddScoped<EntidadFactory<Vehiculo>, VehiculoFactory>();
 builder.Services.AddScoped<IRepositorio<Vehiculo>, RepositorioVehiculo>();
+builder.Services.AddScoped<EntidadFactory<Servicio>, ServicioFactory>();
+builder.Services.AddScoped<IRepositorio<Servicio>, RepositorioServicio>();
 
 // 4. HttpClient asíncrono hacia la API (http://localhost:5251/)
 string apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5251/";
