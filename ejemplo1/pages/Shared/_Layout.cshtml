@@ -233,45 +233,6 @@
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const btnGestion = document.getElementById("btnToggleGestion");
-            const submenu = document.getElementById("submenuInicio");
-
-            if (btnGestion && submenu && window.bootstrap) {
-                const bsCollapse = bootstrap.Collapse.getOrCreateInstance(submenu, {
-                    toggle: false
-                });
-
-                btnGestion.addEventListener("click", function (event) {
-                    event.preventDefault();
-                    event.stopPropagation();
-
-                    const estaAbierto = submenu.classList.contains("show");
-                    if (estaAbierto) {
-                        bsCollapse.hide();
-                        btnGestion.classList.remove("open");
-                        btnGestion.setAttribute("aria-expanded", "false");
-                    } else {
-                        bsCollapse.show();
-                        btnGestion.classList.add("open");
-                        btnGestion.setAttribute("aria-expanded", "true");
-                    }
-                });
-            }
-
-            document.querySelectorAll("#submenuInicio a.nav-link").forEach(function (enlace) {
-                enlace.addEventListener("click", function (event) {
-                    const url = enlace.getAttribute("href");
-                    if (url) {
-                        event.stopPropagation();
-                        window.location.assign(url);
-                    }
-                });
-            });
-        });
-    </script>
-
     <script src="~/js/site.js"
             asp-append-version="true"></script>
 

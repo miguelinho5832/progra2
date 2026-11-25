@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
+using ejemplo1.models;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using ejemplo1.models;
 
-namespace ejemplo1.Pages
+namespace ejemplo1.pages
 {
     public class ClientesModel : PageModel
     {
@@ -29,17 +29,18 @@ namespace ejemplo1.Pages
         {
             try
             {
+                Buscar = (Buscar ?? "").Trim();
+
                 string ruta = string.IsNullOrWhiteSpace(Buscar)
                     ? "api/clientes"
-                    : $"api/clientes?buscar={Uri.EscapeDataString(Buscar.Trim())}";
-
-                if (!string.IsNullOrWhiteSpace(Buscar))
-                {
-                    Buscar = Buscar.Trim();
-                }
+                    : $"api/clientes?buscar={Uri.EscapeDataString(Buscar)}";
 
                 var resultado = await _httpClient.GetFromJsonAsync<List<Cliente>>(ruta);
-                ListaClientes = resultado ?? new List<Cliente>();
+
+                ListaClientes = (resultado ?? new List<Cliente>())
+                    .OrderBy(c => c.Nombre, StringComparer.CurrentCultureIgnoreCase)
+                    .ThenBy(c => c.Id)
+                    .ToList();
             }
             catch
             {
@@ -55,10 +56,20 @@ namespace ejemplo1.Pages
 
         public async Task<IActionResult> OnPostEliminarAsync(string token)
         {
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                TempData["Error"] = "Token de cliente no válido.";
+                return RedirectToPage();
+            }
+
             try
             {
                 string textoId = _protector.Unprotect(token);
-                int id = Convert.ToInt32(textoId);
+                if (!int.TryParse(textoId, out int id) || id <= 0)
+                {
+                    TempData["Error"] = "Identificador de cliente no válido.";
+                    return RedirectToPage();
+                }
 
                 var respuesta = await _httpClient.DeleteAsync($"api/clientes/{id}");
 

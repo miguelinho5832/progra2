@@ -21,8 +21,9 @@ namespace ejemplo1.Repositories
         {
             var clientes = new List<Cliente>();
 
-            const string sql = @"SELECT id, nombre, telefono, email, direccion, fecha_registro
+            const string sql = @"SELECT id, nombre, apellido, ci_nit, telefono, email, direccion, fecha_registro
                                  FROM cliente
+                                 WHERE eliminado = 0
                                  ORDER BY nombre ASC, id ASC";
 
             using var conexion = new MySqlConnection(_configuracion.ConnectionString);
@@ -41,9 +42,9 @@ namespace ejemplo1.Repositories
 
         public async Task<Cliente?> ObtenerIdAsync(int id)
         {
-            const string sql = @"SELECT id, nombre, telefono, email, direccion, fecha_registro
+            const string sql = @"SELECT id, nombre, apellido, ci_nit, telefono, email, direccion, fecha_registro
                                  FROM cliente
-                                 WHERE id = @id";
+                                 WHERE id = @id AND eliminado = 0";
 
             using var conexion = new MySqlConnection(_configuracion.ConnectionString);
             await conexion.OpenAsync();
@@ -64,12 +65,15 @@ namespace ejemplo1.Repositories
         {
             var clientes = new List<Cliente>();
 
-            const string sql = @"SELECT id, nombre, telefono, email, direccion, fecha_registro
+            const string sql = @"SELECT id, nombre, apellido, ci_nit, telefono, email, direccion, fecha_registro
                                  FROM cliente
-                                 WHERE nombre LIKE @texto
-                                    OR telefono LIKE @texto
-                                    OR email LIKE @texto
-                                    OR direccion LIKE @texto
+                                 WHERE eliminado = 0
+                                   AND (nombre LIKE @texto
+                                     OR apellido LIKE @texto
+                                     OR ci_nit LIKE @texto
+                                     OR telefono LIKE @texto
+                                     OR email LIKE @texto
+                                     OR direccion LIKE @texto)
                                  ORDER BY nombre ASC, id ASC";
 
             using var conexion = new MySqlConnection(_configuracion.ConnectionString);
@@ -89,8 +93,8 @@ namespace ejemplo1.Repositories
 
         public async Task<int> CrearAsync(Cliente entidad)
         {
-            const string sql = @"INSERT INTO cliente (nombre, telefono, email, direccion)
-                                 VALUES (@nombre, @telefono, @email, @direccion);
+            const string sql = @"INSERT INTO cliente (nombre, apellido, ci_nit, telefono, email, direccion, estado, eliminado)
+                                 VALUES (@nombre, @apellido, @ci_nit, @telefono, @email, @direccion, 1, 0);
                                  SELECT LAST_INSERT_ID();";
 
             using var conexion = new MySqlConnection(_configuracion.ConnectionString);
@@ -98,6 +102,8 @@ namespace ejemplo1.Repositories
 
             using var comando = new MySqlCommand(sql, conexion);
             comando.Parameters.AddWithValue("@nombre", entidad.Nombre.Trim());
+            comando.Parameters.AddWithValue("@apellido", (entidad.Apellido ?? "").Trim());
+            comando.Parameters.AddWithValue("@ci_nit", (entidad.CiNit ?? "").Trim());
             comando.Parameters.AddWithValue("@telefono", entidad.Telefono.Trim());
             comando.Parameters.AddWithValue("@email", (object?)entidad.Email?.Trim() ?? DBNull.Value);
             comando.Parameters.AddWithValue("@direccion", (object?)entidad.Direccion?.Trim() ?? DBNull.Value);
@@ -110,10 +116,12 @@ namespace ejemplo1.Repositories
         {
             const string sql = @"UPDATE cliente
                                  SET nombre = @nombre,
+                                     apellido = @apellido,
+                                     ci_nit = @ci_nit,
                                      telefono = @telefono,
                                      email = @email,
                                      direccion = @direccion
-                                 WHERE id = @id";
+                                 WHERE id = @id AND eliminado = 0";
 
             using var conexion = new MySqlConnection(_configuracion.ConnectionString);
             await conexion.OpenAsync();
@@ -121,6 +129,8 @@ namespace ejemplo1.Repositories
             using var comando = new MySqlCommand(sql, conexion);
             comando.Parameters.AddWithValue("@id", entidad.Id);
             comando.Parameters.AddWithValue("@nombre", entidad.Nombre.Trim());
+            comando.Parameters.AddWithValue("@apellido", (entidad.Apellido ?? "").Trim());
+            comando.Parameters.AddWithValue("@ci_nit", (entidad.CiNit ?? "").Trim());
             comando.Parameters.AddWithValue("@telefono", entidad.Telefono.Trim());
             comando.Parameters.AddWithValue("@email", (object?)entidad.Email?.Trim() ?? DBNull.Value);
             comando.Parameters.AddWithValue("@direccion", (object?)entidad.Direccion?.Trim() ?? DBNull.Value);
@@ -147,6 +157,15 @@ namespace ejemplo1.Repositories
                         if (!string.IsNullOrWhiteSpace(valor))
                             actual.Nombre = valor.Trim();
                         break;
+                    case "apellido":
+                        if (!string.IsNullOrWhiteSpace(valor))
+                            actual.Apellido = valor.Trim();
+                        break;
+                    case "ci_nit":
+                    case "cinit":
+                        if (!string.IsNullOrWhiteSpace(valor))
+                            actual.CiNit = valor.Trim();
+                        break;
                     case "telefono":
                         if (!string.IsNullOrWhiteSpace(valor))
                             actual.Telefono = valor.Trim();
@@ -165,15 +184,24 @@ namespace ejemplo1.Repositories
 
         public async Task<int> EliminarAsync(int id)
         {
-            const string sql = "DELETE FROM cliente WHERE id = @id";
+            const string sql = @"UPDATE cliente
+                                 SET eliminado = 1
+                                 WHERE id = @id AND eliminado = 0";
 
-            using var conexion = new MySqlConnection(_configuracion.ConnectionString);
-            await conexion.OpenAsync();
+            try
+            {
+                using var conexion = new MySqlConnection(_configuracion.ConnectionString);
+                await conexion.OpenAsync();
 
-            using var comando = new MySqlCommand(sql, conexion);
-            comando.Parameters.AddWithValue("@id", id);
+                using var comando = new MySqlCommand(sql, conexion);
+                comando.Parameters.AddWithValue("@id", id);
 
-            return await comando.ExecuteNonQueryAsync();
+                return await comando.ExecuteNonQueryAsync();
+            }
+            catch (MySqlException ex) when (ex.Number == 1451)
+            {
+                throw new InvalidOperationException("No se puede eliminar el cliente porque tiene registros asociados.", ex);
+            }
         }
 
         private Cliente MapearCliente(MySqlDataReader lector)
@@ -181,6 +209,8 @@ namespace ejemplo1.Repositories
             var cliente = _clienteFactory.Crear();
             cliente.Id = Convert.ToInt32(lector["id"]);
             cliente.Nombre = lector["nombre"].ToString()!;
+            cliente.Apellido = lector["apellido"] == DBNull.Value ? "" : lector["apellido"].ToString()!;
+            cliente.CiNit = lector["ci_nit"] == DBNull.Value ? "" : lector["ci_nit"].ToString()!;
             cliente.Telefono = lector["telefono"].ToString()!;
             cliente.Email = lector["email"] == DBNull.Value ? null : lector["email"].ToString();
             cliente.Direccion = lector["direccion"] == DBNull.Value ? null : lector["direccion"].ToString();

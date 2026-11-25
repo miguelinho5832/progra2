@@ -1,0 +1,106 @@
+﻿@page
+@model ejemplo1.pages.EditarClienteModel
+
+@{
+    ViewData["Title"] = "Editar Cliente";
+}
+
+<div class="container-fluid formulario-taller">
+
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Editar Cliente</h2>
+        <p class="text-muted mb-0">Actualizar todos los datos registrados del cliente</p>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+
+            <form method="post">
+                <input type="hidden" asp-for="TokenActual" />
+                <input type="hidden" asp-for="Cliente.Id" />
+
+                <div asp-validation-summary="All" class="text-danger small mb-3"></div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label asp-for="Cliente.Nombre" class="form-label">Nombre</label>
+                        <input asp-for="Cliente.Nombre" class="form-control" maxlength="50" placeholder="Ej. Carlos" />
+                        <span asp-validation-for="Cliente.Nombre" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Cliente.Apellido" class="form-label">Apellido</label>
+                        <input asp-for="Cliente.Apellido" class="form-control" maxlength="50" placeholder="Ej. Rocabado" />
+                        <span asp-validation-for="Cliente.Apellido" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label asp-for="NumeroCi" class="form-label">Número de CI / NIT</label>
+                        <input asp-for="NumeroCi" class="form-control" maxlength="10" inputmode="numeric" placeholder="Ej. 8456123" />
+                        <span asp-validation-for="NumeroCi" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label asp-for="ExtensionCi" class="form-label">Extensión CI (opcional)</label>
+                        <select asp-for="ExtensionCi" class="form-select">
+                            <option value="">Sin extensión</option>
+                            <option value="CB">CB - Cochabamba</option>
+                            <option value="LP">LP - La Paz</option>
+                            <option value="SC">SC - Santa Cruz</option>
+                            <option value="OR">OR - Oruro</option>
+                            <option value="PT">PT - Potosí</option>
+                            <option value="TJ">TJ - Tarija</option>
+                            <option value="CH">CH - Chuquisaca</option>
+                            <option value="BE">BE - Beni</option>
+                            <option value="PA">PA - Pando</option>
+                        </select>
+                        <span asp-validation-for="ExtensionCi" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label asp-for="Cliente.Telefono" class="form-label">Teléfono</label>
+                        <input asp-for="Cliente.Telefono" class="form-control" maxlength="8" inputmode="numeric" placeholder="Ej. 71234567" />
+                        <span asp-validation-for="Cliente.Telefono" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label asp-for="Cliente.FechaRegistro" class="form-label">Fecha de registro</label>
+                        <input asp-for="Cliente.FechaRegistro" type="datetime-local" class="form-control" readonly />
+                        <span asp-validation-for="Cliente.FechaRegistro" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Cliente.Email" class="form-label">Correo electrónico</label>
+                        <input asp-for="Cliente.Email" class="form-control" maxlength="50" type="email" placeholder="Ej. cliente@correo.com" />
+                        <span asp-validation-for="Cliente.Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Cliente.Direccion" class="form-label">Dirección</label>
+                        <input asp-for="Cliente.Direccion" class="form-control" maxlength="255" placeholder="Ej. Av. Heroínas Jordan 2321" />
+                        <span asp-validation-for="Cliente.Direccion" class="text-danger small"></span>
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-page="/Clientes" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        Guardar Cambios
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

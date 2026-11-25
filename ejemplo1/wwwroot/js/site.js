@@ -1,16 +1,22 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
-    const toggleBtn = document.querySelector('.sidebar-toggle[href="#submenuInicio"]');
+    const toggleBtn = document.getElementById("btnToggleGestion") || document.querySelector('.sidebar-toggle[href="#submenuInicio"]');
     const submenuEl = document.getElementById("submenuInicio");
+    const bs = window["bootstrap"];
 
-    if (toggleBtn && submenuEl && window.bootstrap) {
-        const collapseInstance = bootstrap.Collapse.getOrCreateInstance(submenuEl, {
+    if (toggleBtn && submenuEl && bs && bs.Collapse) {
+        const collapseInstance = bs.Collapse.getOrCreateInstance(submenuEl, {
             toggle: false
         });
 
         toggleBtn.addEventListener("click", (e) => {
             e.preventDefault();
+            e.stopPropagation();
             collapseInstance.toggle();
             toggleBtn.classList.toggle("open");
+            toggleBtn.setAttribute(
+                "aria-expanded",
+                submenuEl.classList.contains("show") ? "false" : "true"
+            );
         });
     }
 

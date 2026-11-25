@@ -27,6 +27,14 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = cGFnZXNcQ2xpZW50ZXMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/contenidoRecuperado/2do_SegundoAñoIncos/programacion2/4toBimestre/11noviembre/ejemplo1/ejemplo1/pages/EditarCliente.cshtml]
+build_metadata.AdditionalFiles.TargetPath = cGFnZXNcRWRpdGFyQ2xpZW50ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/contenidoRecuperado/2do_SegundoAñoIncos/programacion2/4toBimestre/11noviembre/ejemplo1/ejemplo1/pages/EditarVehiculo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = cGFnZXNcRWRpdGFyVmVoaWN1bG8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/contenidoRecuperado/2do_SegundoAñoIncos/programacion2/4toBimestre/11noviembre/ejemplo1/ejemplo1/pages/Index.cshtml]
 build_metadata.AdditionalFiles.TargetPath = cGFnZXNcSW5kZXguY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
@@ -35,8 +43,24 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = cGFnZXNcTnVldm9DbGllbnRlLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/contenidoRecuperado/2do_SegundoAñoIncos/programacion2/4toBimestre/11noviembre/ejemplo1/ejemplo1/pages/NuevoVehiculo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = cGFnZXNcTnVldm9WZWhpY3Vsby5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/contenidoRecuperado/2do_SegundoAñoIncos/programacion2/4toBimestre/11noviembre/ejemplo1/ejemplo1/pages/Shared/_Layout.cshtml]
 build_metadata.AdditionalFiles.TargetPath = cGFnZXNcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/contenidoRecuperado/2do_SegundoAñoIncos/programacion2/4toBimestre/11noviembre/ejemplo1/ejemplo1/pages/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = cGFnZXNcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/contenidoRecuperado/2do_SegundoAñoIncos/programacion2/4toBimestre/11noviembre/ejemplo1/ejemplo1/pages/Vehiculos.cshtml]
+build_metadata.AdditionalFiles.TargetPath = cGFnZXNcVmVoaWN1bG9zLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/contenidoRecuperado/2do_SegundoAñoIncos/programacion2/4toBimestre/11noviembre/ejemplo1/ejemplo1/pages/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = cGFnZXNcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/contenidoRecuperado/2do_SegundoAñoIncos/programacion2/4toBimestre/11noviembre/ejemplo1/ejemplo1/pages/_ViewStart.cshtml]
